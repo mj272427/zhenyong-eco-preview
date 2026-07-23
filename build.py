@@ -40,30 +40,38 @@ def svc_card(item):
     lis=''.join('<li>%s</li>'%t for t in tags)
     return '<div class="svc"><span class="ic">%s</span><h3>%s</h3><p>%s</p><ul>%s</ul></div>'%(ic,title,desc,lis)
 
-# ---------- 實績 ----------
-CASES = [
- ('event','20 張','img/concert.jpg','林口體育館演唱會現場清運','活動清運','林口體育館 演唱會現場清運','2024.06'),
- ('event','20 張','img/concert2.jpg','體育館內演唱會後彩帶清運','活動清運','大型場館 活動後全場清運','2024.06'),
- ('doc','9 張','img/document.jpg','大量文件紙箱回收銷毀','文件銷毀','大批文件安全銷毀','2024.06'),
- ('food','4 張','img/food.jpg','過期食品裝車銷毀報廢','食品報廢銷毀','過期食品銷燬報廢','2024.04'),
- ('food gov','8 張','img/customs.jpg','振勇清運車進入八里垃圾焚化廠合法處理','政府標案','海關食品類銷燬 · 依法進廠處理','2021.08'),
- ('gov','10 張','img/water.jpg','臺北水源特定區環境改善維護作業','政府標案','臺北水源特定區 環境改善維護','承接案'),
-]
-def case_card(c):
-    cat,cnt,src,alt,label,title,date=c
-    return ('<article class="case" data-cat="%s"><div class="thumb"><span class="cnt">%s</span>'
-            '<img src="%s" alt="%s" loading="lazy"></div><div class="meta"><div class="cat">%s</div>'
-            '<h3>%s</h3><div class="date num">%s</div></div></article>')%(cat,cnt,src,alt,label,title,date)
+# ---------- 實績相簿（放一個資料夾＝一本相簿，資料夾名＝相簿名） ----------
+import re, shutil
+IMG_EXT={'.jpg','.jpeg','.png','.webp','.gif'}
+ALBUMS_DIR=os.path.join(HERE,'albums')
 
-def gallery():
-    filt=('<div class="filters" role="group" aria-label="實績分類篩選">'
-          '<button data-f="all" aria-pressed="true">全部</button>'
-          '<button data-f="gov" aria-pressed="false">政府標案</button>'
-          '<button data-f="event" aria-pressed="false">活動清運</button>'
-          '<button data-f="food" aria-pressed="false">食品報廢銷毀</button>'
-          '<button data-f="doc" aria-pressed="false">文件銷毀</button></div>')
-    cards=''.join(case_card(c) for c in CASES)
-    return filt+'<div class="gal" id="gal">'+cards+'</div>'
+def load_albums():
+    out=[]
+    if not os.path.isdir(ALBUMS_DIR): return out
+    for name in sorted(os.listdir(ALBUMS_DIR), reverse=True):
+        d=os.path.join(ALBUMS_DIR,name)
+        if not os.path.isdir(d) or name.startswith('.'): continue
+        photos=sorted(f for f in os.listdir(d) if os.path.splitext(f)[1].lower() in IMG_EXT)
+        if not photos: continue
+        m=re.match(r'^(\d{4})-(\d{2})[_\-](.+)$', name)
+        date,title = ('%s.%s'%(m.group(1),m.group(2)), m.group(3)) if m else ('', name)
+        out.append({'folder':name,'title':title,'date':date,'photos':photos})
+    return out
+
+def album_section(a):
+    tiles=''.join('<a class="ph" href="albums/%s/%s" target="_blank" rel="noopener">'
+                  '<img src="albums/%s/%s" alt="%s" loading="lazy"></a>'
+                  %(a['folder'],p,a['folder'],p,a['title']) for p in a['photos'])
+    date='<span class="al-date num">%s</span>'%a['date'] if a['date'] else ''
+    return ('<section class="album"><div class="al-head"><h3>%s</h3>'
+            '<span class="al-meta">%s<span class="al-cnt">%d 張</span></span></div>'
+            '<div class="ph-grid">%s</div></section>')%(a['title'],date,len(a['photos']),tiles)
+
+def albums_html():
+    al=load_albums()
+    if not al:
+        return '<p style="text-align:center;color:var(--ink-faint)">相簿建置中。</p>'
+    return ''.join(album_section(a) for a in al)
 
 # ---------- 報價流程 ----------
 def process():
@@ -171,10 +179,12 @@ def home():
           '<div class="svc-grid">'+''.join(svc_card(s) for s in SERVICES[:6])+'</div>'
           '<div style="margin-top:26px"><a href="services.html" class="btn btn-ghost">看全部 9 項服務 %s</a></div></div></section>'
           )%S['arrow']
+    _pv=[(a['folder'],p,a['title']) for a in load_albums() for p in a['photos']]
+    _tiles=''.join('<a class="ph" href="works.html"><img src="albums/%s/%s" alt="%s" loading="lazy"></a>'%(f,p,t) for f,p,t in _pv[:8])
     works_preview=('<section class="band band--tint" style="border-top:1px solid var(--line)"><div class="wrap"><div class="sec-head">'
           '<span class="eyebrow">實績介紹</span><h2 class="title">做過的案子，說明我們的能耐</h2>'
           '<p class="lede">從演唱會場館到海關食品銷毀、政府環境維護標案，實績會說話。</p></div>'
-          '<div class="gal" style="margin-top:24px">'+''.join(case_card(c) for c in CASES[:3])+'</div>'
+          '<div class="ph-grid" style="margin-top:24px">'+_tiles+'</div>'
           '<div style="margin-top:26px"><a href="works.html" class="btn btn-ghost">看更多實績 %s</a></div></div></section>'
           )%S['arrow']
     proc=('<section class="band band--dark"><div class="wrap">'+process()+'</div></section>')
@@ -222,10 +232,8 @@ def services():
 
 def works():
     body=page_hero('實績介紹','做過的案子，說明我們的能耐',
-        '從演唱會場館到海關食品銷毀、政府環境維護標案，實績會說話。','實績介紹')
-    body+=('<section class="band band--tint"><div class="wrap">'+gallery()+
-        '<p style="text-align:center;color:var(--ink-faint);font-size:.86rem;margin-top:22px">'
-        '＊以上為振勇實際清運／拆除／銷毀現場照片（取自公司實績相簿，共 5 本、51 張）</p></div></section>')
+        '每一個案子就是一本相簿——現場清運、拆除、銷毀的實況，實績會說話。','實績介紹')
+    body+=('<section class="band band--tint"><div class="wrap">'+albums_html()+'</div></section>')
     return page('works.html','實績介紹｜'+TITLE,DESC,body)
 
 def location():
@@ -264,8 +272,17 @@ PAGES={'index.html':home,'about.html':about,'news.html':news,'services.html':ser
        'works.html':works,'location.html':location,'contact.html':contact}
 
 if __name__=='__main__':
+    out=os.path.join(HERE,'_site')
+    os.makedirs(out,exist_ok=True)
     for fn,builder in PAGES.items():
-        with open(os.path.join(HERE,fn),'w',encoding='utf-8') as f:
+        with open(os.path.join(out,fn),'w',encoding='utf-8') as f:
             f.write(builder())
         print('wrote',fn)
-    print('done')
+    for f in ['styles.css','main.js']:
+        p=os.path.join(HERE,f)
+        if os.path.exists(p): shutil.copy(p,os.path.join(out,f))
+    for d in ['img','albums']:
+        s=os.path.join(HERE,d)
+        if os.path.isdir(s): shutil.copytree(s,os.path.join(out,d),dirs_exist_ok=True)
+    open(os.path.join(out,'.nojekyll'),'w').close()
+    print('site ->',out)
