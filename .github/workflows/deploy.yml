@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'   # 每 30 分鐘自動同步 pCloud 新照片
 
 permissions:
   contents: read
@@ -22,6 +24,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+      - name: Sync pCloud albums
+        env:
+          PCLOUD_CODE: ${{ secrets.PCLOUD_CODE }}
+        run: python3 sync_pcloud.py
+        continue-on-error: true
       - name: Build site
         run: python3 build.py
       - uses: actions/configure-pages@v5
