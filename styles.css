@@ -69,6 +69,18 @@ nav.menu a.active::after{content:"";position:absolute;left:12px;right:12px;botto
 .nav-cta{display:inline-flex!important;align-items:center;gap:7px;background:var(--blue-700)!important;color:#fff!important;padding:10px 16px!important;border-radius:999px;font-weight:800;font-size:.9rem;box-shadow:var(--shadow);margin-left:6px}
 .nav-cta::after{display:none!important}
 .nav-cta:hover{background:var(--blue-900)!important}
+/* 頁首明顯來電按鈕 */
+.nav-phone{display:inline-flex;align-items:center;gap:11px;padding:7px 18px 7px 7px;border-radius:999px;background:var(--green-100);transition:background .16s;margin-left:14px;flex:none}
+.nav-phone:hover{background:var(--green)}
+.np-ic{width:40px;height:40px;flex:none;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center}
+.np-ic svg{width:20px;height:20px}
+.nav-phone:hover .np-ic{background:#fff;color:var(--green-600)}
+.np-txt{display:flex;flex-direction:column;line-height:1.12}
+.np-txt small{font-size:.7rem;font-weight:700;color:var(--green-600);white-space:nowrap}
+.np-txt strong{font-size:1.15rem;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.nav-phone:hover .np-txt small,.nav-phone:hover .np-txt strong{color:#fff}
+@media(max-width:940px){.nav-phone{margin-left:auto}.np-txt small{display:none}.burger{margin-left:8px}}
+@media(max-width:430px){.np-txt{display:none}.nav-phone{padding:7px}}
 .burger{margin-left:auto;display:none;width:44px;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;align-items:center;justify-content:center;color:var(--ink)}
 @media(max-width:940px){
   nav.menu{display:none}

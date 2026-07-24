@@ -148,15 +148,17 @@ def header(active):
     for href,label in NAV:
         cls=' class="active"' if href==active else ''
         links+='<a href="%s"%s>%s</a>'%(href,cls,label)
+    phone=('<a href="tel:0222910883" class="nav-phone" aria-label="撥打免費估價專線 (02)2291-0883">'
+           '<span class="np-ic">%s</span><span class="np-txt">'
+           '<small>免費估價專線 · 直接來電</small><strong>(02)2291-0883</strong></span></a>')%S['phone']
     return ('<div class="util"><div class="wrap"><span>合法清運 · 依法分類處理 · 絕不亂倒</span>'
-            '<div class="util-r"><a href="tel:0222910883">%s(02)2291-0883</a>'
-            '<a href="tel:0282956423">(02)8295-6423</a></div></div></div>'
+            '<div class="util-r"><span>五股在地 · 雙北到府免費估價</span></div></div></div>'
             '<header class="nav"><div class="wrap">'
             '<a href="index.html" class="brand" aria-label="振勇環保有限公司"><span class="mark" aria-hidden="true">%s</span>'
             '<span>振勇環保<small>Zhen Yong Eco</small></span></a>'
+            '<nav class="menu" id="menu">%s</nav>%s'
             '<button class="burger" aria-label="開啟選單" aria-expanded="false" id="burger">%s</button>'
-            '<nav class="menu" id="menu">%s'
-            '<a href="contact.html" class="nav-cta">%s免費估價</a></nav></div></header>')%(S['phone'],S['logo'],S['menu'],links,S['phone'])
+            '</div></header>')%(S['phone'],S['logo'],links,phone,S['menu'])
 
 def footer():
     fnav=''.join('<a href="%s">%s</a>'%(h,l) for h,l in NAV[1:])
