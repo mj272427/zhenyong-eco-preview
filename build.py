@@ -40,39 +40,75 @@ def svc_card(item):
     lis=''.join('<li>%s</li>'%t for t in tags)
     return '<div class="svc"><span class="ic">%s</span><h3>%s</h3><p>%s</p><ul>%s</ul></div>'%(ic,title,desc,lis)
 
-# ---------- 實績相簿（放一個資料夾＝一本相簿，資料夾名＝相簿名） ----------
+# ---------- 實績相簿（pCloud 結構：分類 / 相簿 / 照片） ----------
 import re, shutil
-IMG_EXT={'.jpg','.jpeg','.png','.webp','.gif'}
+IMG_EXT={'.jpg','.jpeg','.png','.webp','.gif','.heic','.heif'}
 ALBUMS_DIR=os.path.join(HERE,'albums')
 
-def load_albums():
-    out=[]
-    if not os.path.isdir(ALBUMS_DIR): return out
-    for name in sorted(os.listdir(ALBUMS_DIR), reverse=True):
-        d=os.path.join(ALBUMS_DIR,name)
-        if not os.path.isdir(d) or name.startswith('.'): continue
-        photos=sorted(f for f in os.listdir(d) if os.path.splitext(f)[1].lower() in IMG_EXT)
-        if not photos: continue
-        m=re.match(r'^(\d{4})-(\d{2})[_\-](.+)$', name)
-        date,title = ('%s.%s'%(m.group(1),m.group(2)), m.group(3)) if m else ('', name)
-        out.append({'folder':name,'title':title,'date':date,'photos':photos})
-    return out
+def _imgs(d):
+    return sorted(f for f in os.listdir(d) if os.path.splitext(f)[1].lower() in IMG_EXT)
+
+def parse_name(name):
+    m=re.match(r'^(1\d{2})(\d{2})(.*)$', name)          # 民國 YYYMM，如 11402 → 2025.02
+    if m and 1<=int(m.group(2))<=12 and 100<=int(m.group(1))<=140:
+        return (m.group(3).strip() or name), '%d.%s'%(int(m.group(1))+1911, m.group(2))
+    m=re.match(r'^(\d{4})-(\d{2})[_\-](.+)$', name)      # 西元 YYYY-MM_
+    if m:
+        return m.group(3), '%s.%s'%(m.group(1), m.group(2))
+    return name, ''
+
+def load_catalog():
+    # [{cat, albums:[{cat,folder,title,date,relpath,photos}]}]；空分類自動略過
+    cats=[]
+    if not os.path.isdir(ALBUMS_DIR): return cats
+    for cat in sorted(os.listdir(ALBUMS_DIR)):
+        cdir=os.path.join(ALBUMS_DIR,cat)
+        if not os.path.isdir(cdir) or cat.startswith('.'): continue
+        albums=[]
+        subdirs=[x for x in sorted(os.listdir(cdir), reverse=True) if os.path.isdir(os.path.join(cdir,x))]
+        if subdirs:
+            for alb in subdirs:
+                ph=_imgs(os.path.join(cdir,alb))
+                if not ph: continue
+                title,date=parse_name(alb)
+                albums.append({'cat':cat,'title':title,'date':date,
+                               'relpath':'albums/%s/%s'%(cat,alb),'photos':ph})
+        else:
+            ph=_imgs(cdir)                               # 相容：分類直接放照片 / 舊單層
+            if ph:
+                title,date=parse_name(cat)
+                albums.append({'cat':cat,'title':title,'date':date,
+                               'relpath':'albums/%s'%cat,'photos':ph})
+        if albums:
+            cats.append({'cat':cat,'albums':albums})
+    return cats
 
 def album_section(a):
-    # 不做成連結：避免一點就開啟／另存原始圖檔
-    tiles=''.join('<div class="ph"><img src="albums/%s/%s" alt="%s（振勇環保實績）" loading="lazy" '
+    # div 不做連結：避免一點就開啟／另存原始圖檔
+    tiles=''.join('<div class="ph"><img src="%s/%s" alt="%s（振勇環保實績）" loading="lazy" '
                   'draggable="false" oncontextmenu="return false"></div>'
-                  %(a['folder'],p,a['title']) for p in a['photos'])
+                  %(a['relpath'],p,a['title']) for p in a['photos'])
     date='<span class="al-date num">%s</span>'%a['date'] if a['date'] else ''
-    return ('<section class="album"><div class="al-head"><h3>%s</h3>'
+    catlab='<span class="al-cat">%s</span>'%a['cat'] if a['title']!=a['cat'] else ''
+    return ('<section class="album" data-cat="%s"><div class="al-head"><div>%s<h3>%s</h3></div>'
             '<span class="al-meta">%s<span class="al-cnt">%d 張</span></span></div>'
-            '<div class="ph-grid">%s</div></section>')%(a['title'],date,len(a['photos']),tiles)
+            '<div class="ph-grid">%s</div></section>'
+            )%(a['cat'],catlab,a['title'],date,len(a['photos']),tiles)
 
-def albums_html():
-    al=load_albums()
-    if not al:
+def works_body():
+    cats=load_catalog()
+    if not cats:
         return '<p style="text-align:center;color:var(--ink-faint)">相簿建置中。</p>'
-    return ''.join(album_section(a) for a in al)
+    filt=''
+    if len(cats)>1:
+        btns='<button data-f="all" aria-pressed="true">全部</button>'+''.join(
+            '<button data-f="%s" aria-pressed="false">%s</button>'%(c['cat'],c['cat']) for c in cats)
+        filt='<div class="filters" role="group" aria-label="分類篩選">%s</div>'%btns
+    return filt+'<div id="gal">'+''.join(album_section(a) for c in cats for a in c['albums'])+'</div>'
+
+def all_photos(limit=8):
+    out=[(a['relpath'],p,a['title']) for c in load_catalog() for a in c['albums'] for p in a['photos']]
+    return out[:limit]
 
 # ---------- 報價流程 ----------
 def process():
@@ -180,8 +216,7 @@ def home():
           '<div class="svc-grid">'+''.join(svc_card(s) for s in SERVICES[:6])+'</div>'
           '<div style="margin-top:26px"><a href="services.html" class="btn btn-ghost">看全部 9 項服務 %s</a></div></div></section>'
           )%S['arrow']
-    _pv=[(a['folder'],p,a['title']) for a in load_albums() for p in a['photos']]
-    _tiles=''.join('<a class="ph" href="works.html"><img src="albums/%s/%s" alt="%s" loading="lazy"></a>'%(f,p,t) for f,p,t in _pv[:8])
+    _tiles=''.join('<a class="ph" href="works.html"><img src="%s/%s" alt="%s" loading="lazy" draggable="false"></a>'%(rp,p,t) for rp,p,t in all_photos(8))
     works_preview=('<section class="band band--tint" style="border-top:1px solid var(--line)"><div class="wrap"><div class="sec-head">'
           '<span class="eyebrow">實績介紹</span><h2 class="title">做過的案子，說明我們的能耐</h2>'
           '<p class="lede">從演唱會場館到海關食品銷毀、政府環境維護標案，實績會說話。</p></div>'
@@ -234,7 +269,7 @@ def services():
 def works():
     body=page_hero('實績介紹','做過的案子，說明我們的能耐',
         '每一個案子就是一本相簿——現場清運、拆除、銷毀的實況，實績會說話。','實績介紹')
-    body+=('<section class="band band--tint"><div class="wrap">'+albums_html()+'</div></section>')
+    body+=('<section class="band band--tint"><div class="wrap">'+works_body()+'</div></section>')
     return page('works.html','實績介紹｜'+TITLE,DESC,body)
 
 def location():

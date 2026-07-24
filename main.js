@@ -16,9 +16,8 @@
         document.querySelectorAll('.filters button').forEach(function(b){b.setAttribute('aria-pressed','false');});
         btn.setAttribute('aria-pressed','true');
         var f=btn.dataset.f;
-        gal.querySelectorAll('.case').forEach(function(c){
-          var show=f==='all'||(' '+c.dataset.cat+' ').indexOf(' '+f+' ')>-1;
-          c.style.display=show?'':'none';
+        gal.querySelectorAll('.album').forEach(function(c){
+          c.style.display=(f==='all'||c.dataset.cat===f)?'':'none';
         });
       });
     });
