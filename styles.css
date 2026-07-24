@@ -194,6 +194,18 @@ nav.menu a.active::after{content:"";position:absolute;left:12px;right:12px;botto
 .case h3{font-size:1.02rem;font-weight:800;margin-top:5px;line-height:1.35}
 .case .date{font-size:.82rem;color:var(--ink-faint);margin-top:5px}
 
+/* 實績分類大圖磚（第一層，相簿封面/畫布感、清楚可點） */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:24px;margin-top:16px}
+@media(max-width:520px){.cat-grid{grid-template-columns:1fr}}
+.cat-tile{position:relative;display:block;aspect-ratio:16/9;max-height:460px;border-radius:20px;overflow:hidden;box-shadow:var(--shadow-lg);border:1px solid var(--line)}
+.cat-tile img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+.cat-tile:hover img{transform:scale(1.05)}
+.ct-ov{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:28px 30px;color:#fff;background:linear-gradient(to top,rgba(16,43,69,.92) 0%,rgba(16,43,69,.4) 42%,transparent 72%)}
+.ct-meta{display:block;font-size:.86rem;font-weight:700;color:var(--on-dark-accent);letter-spacing:.05em;margin-bottom:8px}
+.ct-txt h3{font-size:clamp(1.5rem,2.8vw,2.1rem);font-weight:900;color:#fff;line-height:1.15;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.ct-go{flex:none;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border:1.5px solid rgba(255,255,255,.55);color:#fff;font-weight:800;font-size:.94rem;padding:11px 18px;border-radius:999px;backdrop-filter:blur(4px);transition:background .18s,border-color .18s,transform .18s;white-space:nowrap}
+.cat-tile:hover .ct-go{background:var(--green);border-color:var(--green);transform:translateX(3px)}
+
 /* 實績封面卡（分類/相簿入口） */
 .cover-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:14px}
 @media(max-width:860px){.cover-grid{grid-template-columns:repeat(2,1fr)}}

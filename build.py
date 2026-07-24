@@ -93,6 +93,13 @@ def cover_card(href, cover_src, title, meta, catlabel=''):
             '<div class="cc-body">%s<h3>%s</h3><span class="cc-meta">%s</span></div></a>'
             )%(href, cover_src, title, lab, title, meta)
 
+def cat_tile(href, cover_src, title, meta):
+    return ('<a class="cat-tile" href="%s"><img src="%s" alt="%s" loading="lazy" draggable="false">'
+            '<div class="ct-ov"><div class="ct-txt"><span class="ct-meta">%s</span><h3>%s</h3></div>'
+            '<span class="ct-go">查看實績 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+            'stroke-width="2.5" width="18" height="18"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div></a>'
+            )%(href, cover_src, title, meta, title)
+
 def photo_grid(a):
     return '<div class="ph-grid">'+''.join(
         '<div class="ph"><img src="%s/%s" alt="%s（振勇環保實績）" loading="lazy" '
@@ -266,11 +273,11 @@ def works():  # 第一層：分類卡片
     if not cats:
         inner='<p style="text-align:center;color:var(--ink-faint)">相簿建置中。</p>'
     else:
-        inner='<div class="cover-grid">'+''.join(cover_card(
+        inner='<div class="cat-grid">'+''.join(cat_tile(
             'cat-%s.html'%slug(c['cat']),
             c['albums'][0]['relpath']+'/'+c['albums'][0]['photos'][0],
             c['cat'],
-            '%d 本相簿 · %d 張'%(len(c['albums']), sum(len(a['photos']) for a in c['albums']))
+            '%d 本相簿 · %d 張照片'%(len(c['albums']), sum(len(a['photos']) for a in c['albums']))
         ) for c in cats)+'</div>'
     body+='<section class="band band--tint"><div class="wrap">'+inner+'</div></section>'
     return page('works.html','實績介紹｜'+TITLE,DESC,body)
