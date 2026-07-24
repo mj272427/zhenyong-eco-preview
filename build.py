@@ -41,7 +41,7 @@ def svc_card(item):
     return '<div class="svc"><span class="ic">%s</span><h3>%s</h3><p>%s</p><ul>%s</ul></div>'%(ic,title,desc,lis)
 
 # ---------- 實績相簿（pCloud 結構：分類 / 相簿 / 照片，三層瀏覽） ----------
-import re, shutil, hashlib
+import re, shutil, hashlib, json
 IMG_EXT={'.jpg','.jpeg','.png','.webp','.gif','.heic','.heif'}
 ALBUMS_DIR=os.path.join(HERE,'albums')
 
@@ -179,27 +179,54 @@ def mobar():
             '<a href="contact.html" class="m-line">%s加 LINE 估價</a></div>')%(S['phone'],S['line'])
 
 def page(active,title,desc,body):
+    canon=SITE_URL+'/'+('' if active=='index.html' else active)
     return ('<!doctype html>\n<html lang="zh-Hant">\n<head>\n<meta charset="utf-8">\n'
             '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-            '<title>%s</title>\n<meta name="description" content="%s">\n'
+            '<title>'+title+'</title>\n'
+            '<meta name="description" content="'+desc+'">\n'
+            '<meta name="robots" content="index,follow">\n'
+            '<link rel="canonical" href="'+canon+'">\n'
+            '<meta property="og:type" content="website">\n'
+            '<meta property="og:site_name" content="振勇環保有限公司">\n'
+            '<meta property="og:title" content="'+title+'">\n'
+            '<meta property="og:description" content="'+desc+'">\n'
+            '<meta property="og:url" content="'+canon+'">\n'
+            '<meta property="og:image" content="'+OG_IMAGE+'">\n'
+            '<script type="application/ld+json">'+SCHEMA+'</script>\n'
             '<link rel="stylesheet" href="styles.css">\n</head>\n<body>\n'
-            '%s\n%s\n%s\n%s\n<script src="main.js" defer></script>\n</body>\n</html>\n'
-            )%(title,desc,header(active),body,footer(),mobar())
+            +header(active)+'\n'+body+'\n'+footer()+'\n'+mobar()+'\n'
+            '<script src="main.js" defer></script>\n</body>\n</html>\n')
 
 def page_hero(eyebrow,h1,p,crumb):
     return ('<section class="page-hero"><div class="wrap"><span class="eyebrow">%s</span>'
             '<h1>%s</h1><p>%s</p><div class="crumb"><a href="index.html">首頁</a> / %s</div></div></section>'
             )%(eyebrow,h1,p,crumb)
 
-TITLE='振勇環保有限公司｜五股·雙北 廢棄物清運·拆除清運·資源回收'
-DESC='振勇環保有限公司—五股在地合法清運業者。廢棄物清運、拆除清運、資源回收、文件銷毀、食品報廢、環境消毒。持乙級廢棄物處理技術員證照，新北市環保局核定清除處理廠商。'
+SITE_URL='https://zhenyong-eco.pages.dev'   # ⚠️ 買自有網域後只要改這行（canonical / sitemap / schema / OG 全吃這個）
+OG_IMAGE=SITE_URL+'/img/concert.jpg'
+TITLE='振勇環保有限公司｜台北·新北·桃園 廢棄物清運·拆除清運·資源回收'
+DESC='振勇環保有限公司—五股在地、服務台北／新北／桃園的合法清運業者。廢棄物清運、事業廢棄物、拆除清運、資源回收、文件銷毀、食品報廢、環境消毒。持乙級廢棄物處理技術員證照，新北市環保局核定清除處理廠商，北北桃到府、免費估價。'
+SCHEMA=json.dumps({
+  "@context":"https://schema.org",
+  "@type":"LocalBusiness",
+  "name":"振勇環保有限公司",
+  "image":OG_IMAGE,
+  "url":SITE_URL+'/',
+  "telephone":"+886-2-2291-0883",
+  "email":"a0939516638@gmail.com",
+  "address":{"@type":"PostalAddress","streetAddress":"民義路二段23-9號","addressLocality":"五股區","addressRegion":"新北市","postalCode":"248","addressCountry":"TW"},
+  "areaServed":[{"@type":"City","name":"台北市"},{"@type":"City","name":"新北市"},{"@type":"City","name":"桃園市"},{"@type":"City","name":"基隆市"}],
+  "knowsAbout":["廢棄物清運","事業廢棄物清運","拆除清運","廠房拆除","資源回收","文件銷毀","食品報廢銷毀","環境消毒"],
+  "description":DESC,
+  "priceRange":"$$"
+},ensure_ascii=False)
 
 # =================== 各頁內容 ===================
 def home():
     hero=('<section class="hero"><div class="wrap"><div class="hero-main">'
-          '<span class="eyebrow">五股 · 雙北　廢棄物清運 · 拆除清運 · 資源回收</span>'
+          '<span class="eyebrow">台北 · 新北 · 桃園　廢棄物清運 · 拆除清運 · 資源回收</span>'
           '<h1>一通電話，<br><span class="hl">垃圾變乾淨空間</span></h1>'
-          '<p class="sub">振勇環保深耕五股在地，承接家庭、店面、廠房與活動現場的廢棄物清運、拆除與資源回收。合法業者、依法分類處理，服務範圍涵蓋雙北一帶，歡迎來電免費估價。</p>'
+          '<p class="sub">振勇環保深耕五股在地，承接家庭、店面、廠房與活動現場的廢棄物清運、拆除與資源回收。合法業者、依法分類處理，服務範圍涵蓋台北、新北、桃園，機動調度、快速到場，歡迎來電免費估價。</p>'
           '<div class="cta-row"><a href="tel:0222910883" class="btn btn-call">%s撥打電話</a>'
           '<a href="contact.html" class="btn btn-line">%s加 LINE 免費估價</a></div>'
           '<div class="chips"><span class="chip">%s乙級廢棄物處理技術員</span>'
@@ -208,7 +235,7 @@ def home():
           '<aside class="hero-card"><h3>為什麼選振勇？</h3><div class="big">合法 · 準時 · 透明</div>'
           '<p>不亂喊價、不亂倒棄，一車清乾淨。</p><div class="stat-grid">'
           '<div class="stat"><b>免費</b><span>來電／到場估價</span></div>'
-          '<div class="stat"><b>雙北</b><span>一帶皆可服務</span></div>'
+          '<div class="stat"><b>北北桃</b><span>台北新北桃園</span></div>'
           '<div class="stat"><b>9 大</b><span>清運拆除服務</span></div>'
           '<div class="stat"><b>依法</b><span>分類處理申報</span></div></div></aside></div></section>'
           )%(S['phone'],S['line'],S['check'],S['star'],S['shield'],S['pin'])
@@ -297,14 +324,14 @@ def works_subpages():  # 第二層(分類→相簿卡片) + 第三層(相簿→�
         b=page_hero('實績介紹', c['cat'], '共 %d 本相簿，點選相簿看完整照片。'%len(c['albums']),
                     '<a href="works.html">實績介紹</a> / '+c['cat'])
         b+='<section class="band band--tint"><div class="wrap">'+cards+'</div></section>'
-        out['cat-%s.html'%cslug]=page('works.html', c['cat']+'｜'+TITLE, DESC, b)
+        out['cat-%s.html'%cslug]=page('works.html', c['cat']+'｜'+TITLE, c['cat']+'實績｜振勇環保北北桃（台北／新北／桃園）廢棄物清運、拆除清運、資源回收，合法業者到府免費估價。', b)
         for a in c['albums']:
             crumb=('<a href="works.html">實績介紹</a> / <a href="cat-%s.html">%s</a> / %s'
                    %(cslug, c['cat'], a['title']))
             sub=((a['date']+' · ') if a['date'] else '')+'%d 張'%len(a['photos'])
             ab=page_hero(c['cat'], a['title'], sub, crumb)
             ab+='<section class="band band--tint"><div class="wrap">'+photo_grid(a)+'</div></section>'
-            out['alb-%s.html'%slug(a['relpath'])]=page('works.html', a['title']+'｜'+TITLE, DESC, ab)
+            out['alb-%s.html'%slug(a['relpath'])]=page('works.html', a['title']+'｜'+TITLE, a['title']+'實績｜振勇環保北北桃（台北／新北／桃園）廢棄物清運、拆除、資源回收到府免費估價。', ab)
     return out
 
 def location():
@@ -317,7 +344,16 @@ def location():
         '</div><div class="map"><iframe title="振勇環保有限公司地圖" loading="lazy" referrerpolicy="no-referrer-when-downgrade" '
         'src="https://maps.google.com/maps?q=%%E6%%96%%B0%%E5%%8C%%97%%E5%%B8%%82%%E4%%BA%%94%%E8%%82%%A1%%E5%%8D%%80%%E6%%B0%%91%%E7%%BE%%A9%%E8%%B7%%AF%%E4%%BA%%8C%%E6%%AE%%B523-9%%E8%%99%%9F&z=16&output=embed"></iframe>'
         '</div></div></div></section>')%(S['pin2'],S['phone'],S['mail'],S['phone'])
-    return page('location.html','交通位置｜'+TITLE,DESC,body)
+    body+=('<section class="band"><div class="wrap"><div class="sec-head">'
+        '<span class="eyebrow">服務地區</span><h2 class="title">台北 · 新北 · 桃園，北部都跑</h2>'
+        '<p class="lede">公司設在新北五股，機動調度、快速到場，服務範圍涵蓋北北桃各區。</p></div>'
+        '<p style="max-width:840px;margin:0 auto;text-align:center;color:var(--ink-soft);line-height:2.1">'
+        '<b>台北市</b>（全區）｜<b>新北市</b>（五股、新莊、泰山、林口、三重、蘆洲、板橋、樹林、土城、中和、永和、汐止、淡水…）｜'
+        '<b>桃園市</b>（桃園區、龜山、蘆竹、大園、中壢、八德、龍潭…）｜<b>基隆市</b><br>'
+        '不論廢棄物清運、事業廢棄物、拆除清運、資源回收、食品報廢或環境消毒，一通電話到府免費估價。</p>'
+        '</div></section>')
+    return page('location.html','交通位置｜'+TITLE,
+        '振勇環保服務台北、新北、桃園、基隆——北北桃各區廢棄物清運、拆除清運、資源回收到府免費估價。公司位於新北市五股區民義路二段。',body)
 
 def contact():
     body=page_hero('聯絡我們','留個訊息，我們盡速回覆','急件請直接來電或加 LINE；一般詢問也可以留言，我們會盡快與你聯繫。','聯絡我們')
@@ -345,14 +381,26 @@ PAGES={'index.html':home,'about.html':about,'news.html':news,'services.html':ser
 if __name__=='__main__':
     out=os.path.join(HERE,'_site')
     os.makedirs(out,exist_ok=True)
+    written=[]
     for fn,builder in PAGES.items():
         with open(os.path.join(out,fn),'w',encoding='utf-8') as f:
             f.write(builder())
-        print('wrote',fn)
+        written.append(fn); print('wrote',fn)
     for fn,html in works_subpages().items():
         with open(os.path.join(out,fn),'w',encoding='utf-8') as f:
             f.write(html)
-        print('wrote',fn)
+        written.append(fn); print('wrote',fn)
+    sm=['<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for fn in written:
+        loc=SITE_URL+'/'+('' if fn=='index.html' else fn)
+        sm.append('  <url><loc>'+loc+'</loc><changefreq>weekly</changefreq></url>')
+    sm.append('</urlset>')
+    with open(os.path.join(out,'sitemap.xml'),'w',encoding='utf-8') as f:
+        f.write('\n'.join(sm))
+    with open(os.path.join(out,'robots.txt'),'w',encoding='utf-8') as f:
+        f.write('User-agent: *\nAllow: /\n\nSitemap: '+SITE_URL+'/sitemap.xml\n')
+    print('wrote sitemap.xml + robots.txt')
     for f in ['styles.css','main.js']:
         p=os.path.join(HERE,f)
         if os.path.exists(p): shutil.copy(p,os.path.join(out,f))
