@@ -52,6 +52,7 @@ h2.title{font-size:clamp(1.6rem,3.4vw,2.3rem);line-height:1.2;font-weight:800;le
 .util a{color:var(--on-dark);opacity:.92;display:inline-flex;align-items:center;gap:6px}
 .util a:hover{opacity:1;color:#fff}
 .util .util-r{display:flex;gap:16px;align-items:center}
+@media(max-width:768px){.util{display:none}}   /* 手機隱藏頂端資訊條，頁首從「振勇環保」那列開始 */
 
 /* 頁首導覽 */
 header.nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
