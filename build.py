@@ -59,9 +59,10 @@ def load_albums():
     return out
 
 def album_section(a):
-    tiles=''.join('<a class="ph" href="albums/%s/%s" target="_blank" rel="noopener">'
-                  '<img src="albums/%s/%s" alt="%s" loading="lazy"></a>'
-                  %(a['folder'],p,a['folder'],p,a['title']) for p in a['photos'])
+    # 不做成連結：避免一點就開啟／另存原始圖檔
+    tiles=''.join('<div class="ph"><img src="albums/%s/%s" alt="%s（振勇環保實績）" loading="lazy" '
+                  'draggable="false" oncontextmenu="return false"></div>'
+                  %(a['folder'],p,a['title']) for p in a['photos'])
     date='<span class="al-date num">%s</span>'%a['date'] if a['date'] else ''
     return ('<section class="album"><div class="al-head"><h3>%s</h3>'
             '<span class="al-meta">%s<span class="al-cnt">%d 張</span></span></div>'

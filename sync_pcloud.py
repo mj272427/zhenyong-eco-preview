@@ -20,14 +20,12 @@ def fetch(url, dest):
         f.write(r.read())
 
 def link_for(fileid):
-    # 先試原檔下載連結；不行再退大縮圖（1600px，網頁足夠且更快）
-    dl = call('getpublinkdownload', code=CODE, fileid=fileid, forcedownload=1)
-    if dl.get('result') == 0 and dl.get('hosts'):
-        return 'https://' + dl['hosts'][0] + dl['path']
-    th = call('getpubthumblink', code=CODE, fileid=fileid, size='1600x1600')
-    if th.get('result') == 0 and th.get('hosts'):
-        return 'https://' + th['hosts'][0] + th['path']
-    raise RuntimeError('取不到下載連結 fileid=%s dl=%s' % (fileid, json.dumps(dl, ensure_ascii=False)))
+    # 只取「網頁尺寸縮圖」——原始高解析檔絕不放上網站（避免同業整包抓走可用大圖）
+    for size in ('1024x1024', '800x800', '640x640'):
+        th = call('getpubthumblink', code=CODE, fileid=fileid, size=size)
+        if th.get('result') == 0 and th.get('hosts'):
+            return 'https://' + th['hosts'][0] + th['path']
+    return None  # 產不出縮圖就跳過這張，寧可少一張也不放原檔
 
 def safe(name):
     return re.sub(r'[\\/:*?"<>|]+', '_', name).strip() or 'album'
@@ -56,12 +54,17 @@ def main():
             continue
         adir = os.path.join(ALBUMS, name)
         os.makedirs(adir, exist_ok=True)
+        got = 0
         for i, f in enumerate(sorted(imgs, key=lambda x: x.get('name', '')), 1):
-            ext = os.path.splitext(f.get('name', ''))[1].lower() or '.jpg'
-            dest = os.path.join(adir, '%03d%s' % (i, ext))
-            fetch(link_for(f['fileid']), dest)
+            url = link_for(f['fileid'])
+            if not url:
+                print('    ⚠ 產不出縮圖，跳過：', f.get('name'))
+                continue
+            dest = os.path.join(adir, '%03d.jpg' % i)
+            fetch(url, dest)
+            got += 1
             total += 1
-        print('  相簿:', name, '->', len(imgs), '張')
+        print('  相簿:', name, '->', got, '張')
     print('pCloud 同步完成：%d 本相簿、%d 張照片。' % (len(folders), total))
 
 if __name__ == '__main__':
