@@ -1,0 +1,40 @@
+name: pCloud 偵測器（有新照片才觸發重建）
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # 每 15 分鐘看一眼 pCloud（只讀 metadata、極省）
+  workflow_dispatch:          # 也可在 Actions 頁手動按「立即檢查」
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pcloud-detect
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: 讀取 pCloud 指紋
+        env:
+          PCLOUD_CODE: ${{ secrets.PCLOUD_CODE }}
+        run: python3 check_pcloud.py
+
+      - name: 有變更 → commit + push（觸發 Cloudflare 重建）
+        run: |
+          if [ -n "$(git status --porcelain .pcloud_fp)" ]; then
+            git config user.name "pCloud-detector"
+            git config user.email "actions@users.noreply.github.com"
+            git add .pcloud_fp
+            git commit -m "auto: 偵測到 pCloud 相簿更新"
+            git push
+            echo "::notice::偵測到 pCloud 有變更，已推送觸發重建"
+          else
+            echo "pCloud 無變更，不觸發重建"
+          fi
