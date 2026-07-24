@@ -40,8 +40,8 @@ def svc_card(item):
     lis=''.join('<li>%s</li>'%t for t in tags)
     return '<div class="svc"><span class="ic">%s</span><h3>%s</h3><p>%s</p><ul>%s</ul></div>'%(ic,title,desc,lis)
 
-# ---------- 實績相簿（pCloud 結構：分類 / 相簿 / 照片） ----------
-import re, shutil
+# ---------- 實績相簿（pCloud 結構：分類 / 相簿 / 照片，三層瀏覽） ----------
+import re, shutil, hashlib
 IMG_EXT={'.jpg','.jpeg','.png','.webp','.gif','.heic','.heif'}
 ALBUMS_DIR=os.path.join(HERE,'albums')
 
@@ -83,28 +83,21 @@ def load_catalog():
             cats.append({'cat':cat,'albums':albums})
     return cats
 
-def album_section(a):
-    # div 不做連結：避免一點就開啟／另存原始圖檔
-    tiles=''.join('<div class="ph"><img src="%s/%s" alt="%s（振勇環保實績）" loading="lazy" '
-                  'draggable="false" oncontextmenu="return false"></div>'
-                  %(a['relpath'],p,a['title']) for p in a['photos'])
-    date='<span class="al-date num">%s</span>'%a['date'] if a['date'] else ''
-    catlab='<span class="al-cat">%s</span>'%a['cat'] if a['title']!=a['cat'] else ''
-    return ('<section class="album" data-cat="%s"><div class="al-head"><div>%s<h3>%s</h3></div>'
-            '<span class="al-meta">%s<span class="al-cnt">%d 張</span></span></div>'
-            '<div class="ph-grid">%s</div></section>'
-            )%(a['cat'],catlab,a['title'],date,len(a['photos']),tiles)
+def slug(s):
+    return hashlib.sha1(s.encode('utf-8')).hexdigest()[:8]
 
-def works_body():
-    cats=load_catalog()
-    if not cats:
-        return '<p style="text-align:center;color:var(--ink-faint)">相簿建置中。</p>'
-    filt=''
-    if len(cats)>1:
-        btns='<button data-f="all" aria-pressed="true">全部</button>'+''.join(
-            '<button data-f="%s" aria-pressed="false">%s</button>'%(c['cat'],c['cat']) for c in cats)
-        filt='<div class="filters" role="group" aria-label="分類篩選">%s</div>'%btns
-    return filt+'<div id="gal">'+''.join(album_section(a) for c in cats for a in c['albums'])+'</div>'
+def cover_card(href, cover_src, title, meta, catlabel=''):
+    lab='<span class="cc-cat">%s</span>'%catlabel if catlabel else ''
+    return ('<a class="cover-card" href="%s"><div class="cc-img">'
+            '<img src="%s" alt="%s" loading="lazy" draggable="false"></div>'
+            '<div class="cc-body">%s<h3>%s</h3><span class="cc-meta">%s</span></div></a>'
+            )%(href, cover_src, title, lab, title, meta)
+
+def photo_grid(a):
+    return '<div class="ph-grid">'+''.join(
+        '<div class="ph"><img src="%s/%s" alt="%s（振勇環保實績）" loading="lazy" '
+        'draggable="false" oncontextmenu="return false"></div>'%(a['relpath'],p,a['title'])
+        for p in a['photos'])+'</div>'
 
 def all_photos(limit=8):
     out=[(a['relpath'],p,a['title']) for c in load_catalog() for a in c['albums'] for p in a['photos']]
@@ -266,11 +259,44 @@ def services():
     body+=('<section class="band band--dark"><div class="wrap">'+process()+'</div></section>')
     return page('services.html','服務項目｜'+TITLE,DESC,body)
 
-def works():
+def works():  # 第一層：分類卡片
+    cats=load_catalog()
     body=page_hero('實績介紹','做過的案子，說明我們的能耐',
-        '每一個案子就是一本相簿——現場清運、拆除、銷毀的實況，實績會說話。','實績介紹')
-    body+=('<section class="band band--tint"><div class="wrap">'+works_body()+'</div></section>')
+        '點選下方分類，看看各領域的清運、拆除、銷毀實況。','實績介紹')
+    if not cats:
+        inner='<p style="text-align:center;color:var(--ink-faint)">相簿建置中。</p>'
+    else:
+        inner='<div class="cover-grid">'+''.join(cover_card(
+            'cat-%s.html'%slug(c['cat']),
+            c['albums'][0]['relpath']+'/'+c['albums'][0]['photos'][0],
+            c['cat'],
+            '%d 本相簿 · %d 張'%(len(c['albums']), sum(len(a['photos']) for a in c['albums']))
+        ) for c in cats)+'</div>'
+    body+='<section class="band band--tint"><div class="wrap">'+inner+'</div></section>'
     return page('works.html','實績介紹｜'+TITLE,DESC,body)
+
+def works_subpages():  # 第二層(分類→相簿卡片) + 第三層(相簿→全部照片)
+    out={}
+    for c in load_catalog():
+        cslug=slug(c['cat'])
+        cards='<div class="cover-grid">'+''.join(cover_card(
+            'alb-%s.html'%slug(a['relpath']),
+            a['relpath']+'/'+a['photos'][0],
+            a['title'],
+            ((a['date']+' · ') if a['date'] else '')+'%d 張'%len(a['photos'])
+        ) for a in c['albums'])+'</div>'
+        b=page_hero('實績介紹', c['cat'], '共 %d 本相簿，點選相簿看完整照片。'%len(c['albums']),
+                    '<a href="works.html">實績介紹</a> / '+c['cat'])
+        b+='<section class="band band--tint"><div class="wrap">'+cards+'</div></section>'
+        out['cat-%s.html'%cslug]=page('works.html', c['cat']+'｜'+TITLE, DESC, b)
+        for a in c['albums']:
+            crumb=('<a href="works.html">實績介紹</a> / <a href="cat-%s.html">%s</a> / %s'
+                   %(cslug, c['cat'], a['title']))
+            sub=((a['date']+' · ') if a['date'] else '')+'%d 張'%len(a['photos'])
+            ab=page_hero(c['cat'], a['title'], sub, crumb)
+            ab+='<section class="band band--tint"><div class="wrap">'+photo_grid(a)+'</div></section>'
+            out['alb-%s.html'%slug(a['relpath'])]=page('works.html', a['title']+'｜'+TITLE, DESC, ab)
+    return out
 
 def location():
     body=page_hero('交通位置','在五股，隨時為雙北出車','公司位於新北市五股區民義路二段，鄰近雙北，機動調度、快速到場。','交通位置')
@@ -313,6 +339,10 @@ if __name__=='__main__':
     for fn,builder in PAGES.items():
         with open(os.path.join(out,fn),'w',encoding='utf-8') as f:
             f.write(builder())
+        print('wrote',fn)
+    for fn,html in works_subpages().items():
+        with open(os.path.join(out,fn),'w',encoding='utf-8') as f:
+            f.write(html)
         print('wrote',fn)
     for f in ['styles.css','main.js']:
         p=os.path.join(HERE,f)
