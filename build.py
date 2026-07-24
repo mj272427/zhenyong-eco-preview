@@ -158,7 +158,7 @@ def header(active):
             '<span>振勇環保<small>Zhen Yong Eco</small></span></a>'
             '<nav class="menu" id="menu">%s</nav>%s'
             '<button class="burger" aria-label="開啟選單" aria-expanded="false" id="burger">%s</button>'
-            '</div></header>')%(S['phone'],S['logo'],links,phone,S['menu'])
+            '</div></header>')%(S['logo'],links,phone,S['menu'])
 
 def footer():
     fnav=''.join('<a href="%s">%s</a>'%(h,l) for h,l in NAV[1:])
