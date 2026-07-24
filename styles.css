@@ -7,6 +7,8 @@
   --green:#12B866;      /* 亮綠：重點、eyebrow、圖示、active */
   --green-600:#0E9A54;  /* 亮綠 hover */
   --line-green:#06C755; /* LINE 官方綠 */
+  --call-blue:#3E8FD6;   /* 撥打電話鈕：亮藍，跟綠色協調 */
+  --call-blue-d:#2E74AD; /* 藍 hover */
   --on-dark:#EAF2F9;    /* 深底上的文字 */
   --on-dark-soft:#B4C8D8;
   --on-dark-accent:#54E29B;
@@ -96,8 +98,9 @@ nav.menu a.active::after{content:"";position:absolute;left:12px;right:12px;botto
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:14px 24px;border-radius:999px;font-weight:800;font-size:1rem;cursor:pointer;border:2px solid transparent;transition:transform .12s ease,background .18s ease,box-shadow .18s}
 .btn svg{width:19px;height:19px}
 .btn:hover{transform:translateY(-1px)}
-.btn-call{background:var(--blue-700);color:#fff;box-shadow:0 10px 22px -12px var(--blue-700)}
-.btn-call:hover{background:var(--blue-900)}
+.btn-call{background:var(--call-blue);color:#fff;box-shadow:0 10px 22px -12px var(--call-blue);font-size:1.2rem;letter-spacing:.5px}
+.btn-call svg{width:23px;height:23px;stroke-width:2.4}
+.btn-call:hover{background:var(--call-blue-d)}
 .btn-line{background:var(--line-green);color:#fff;box-shadow:0 10px 22px -12px var(--line-green)}
 .btn-line:hover{filter:brightness(.95)}
 .btn-green{background:var(--green);color:#fff;box-shadow:0 10px 22px -12px var(--green)}
@@ -307,6 +310,6 @@ footer .legal{border-top:1px solid rgba(255,255,255,.12);margin-top:34px;padding
 .mobar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:none;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -8px 24px -14px rgba(0,0,0,.3)}
 .mobar a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 8px;font-weight:800;font-size:1rem}
 .mobar a svg{width:20px;height:20px}
-.mobar .m-call{color:#fff;background:var(--blue-700)}
+.mobar .m-call{color:#fff;background:var(--call-blue)}
 .mobar .m-line{color:#fff;background:var(--line-green)}
 @media(max-width:940px){.mobar{display:flex}}
